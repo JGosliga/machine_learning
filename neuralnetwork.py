@@ -218,12 +218,8 @@ if __name__ == "__main__":
 
     print(net.full_forward_prop(training_images_array[0]))
 
-<<<<<<< HEAD
     Y = convert_labels_to_input(training_labels_array)
     net.train_network(training_images_array, Y, epochs=10)
-=======
-    net.train_network(training_images_array, training_labels_array, epochs=20)
->>>>>>> 7d302d01a87cd138b60093ca9c7d6edb66165cd0
 
     print(net.full_forward_prop(training_images_array[0]))
 
