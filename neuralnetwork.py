@@ -195,8 +195,7 @@ class NeuralNetwork:
             print("Current epoch:", j + 1)
 
 if __name__ == "__main__":
-    architecture = [{"input_dim" : 784, "output_dim" : 32, "activation" : "relu"},
-                    {"input_dim" : 32, "output_dim" : 16, "activation" : "relu"},
+    architecture = [{"input_dim" : 784, "output_dim" : 16, "activation" : "relu"},
                     {"input_dim" : 16, "output_dim" : 10, "activation" : "sigmoid"}]
     net = NeuralNetwork(architecture)
 
@@ -208,7 +207,7 @@ if __name__ == "__main__":
 
     print(net.full_forward_prop(training_images_array[0]))
 
-    net.train_network(training_images_array, training_labels_array, epochs=10)
+    net.train_network(training_images_array, training_labels_array, epochs=20)
 
     print(net.full_forward_prop(training_images_array[0]))
 
