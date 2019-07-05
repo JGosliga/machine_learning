@@ -182,22 +182,20 @@ class NeuralNetwork:
 
     def parameter_optimisation(self, steps):
         # Controls how quickly the algorithm moves through the gradient descent
-        learning_rate = -0.1
+        learning_rate = 0.01
         # Move in the opposite direction from the steepest ascent
         for idx, weights in enumerate(self.weights):
             self.weights[idx] -= learning_rate / steps * np.array(self.weight_adjust[idx])
-            self.biases[idx] -= learning_rate / steps * np.array(self.biases_adjust[idx])
+            self.biases[idx] -= learning_rate /steps * np.array(self.biases_adjust[idx])
             for idx2, unit in enumerate(weights):
                 weights_norm = np.sqrt(sum(unit ** 2))
-                print(weights_norm)
                 if weights_norm > 3:
                     self.weights[idx][idx2] = np.array(unit) / unit.max()
-                    print(self.weights[idx][idx2])
-                    self.biases[idx][idx2] = np.array(self.biases[idx][idx2]) / unit.max()
+                    self.biases[idx] = np.array(self.biases[idx]) / unit.max()
             
     def train_network(self, X, labels, epochs):
         # Iterates the forward and backward propagation steps to train on the data given
-        steps = X.shape[0]
+        steps = X.shape[0] - 50000
         for j in range(epochs):
             for i in range(steps):
                 Y_hat = self.full_forward_prop(X[i])
@@ -206,8 +204,8 @@ class NeuralNetwork:
             print("Current epoch:", j + 1)
 
 if __name__ == "__main__":
-    architecture = [{"input_dim" : 784, "output_dim" : 16, "activation" : "relu"},
-                    {"input_dim" : 16, "output_dim" : 10, "activation" : "sigmoid"}]
+    architecture = [{"input_dim" : 784, "output_dim" : 30, "activation" : "relu"},
+                    {"input_dim" : 30, "output_dim" : 10, "activation" : "sigmoid"}]
     net = NeuralNetwork(architecture)
 
     training_images_array, training_labels_array, test_images_array, test_labels_array = import_data()
@@ -219,7 +217,7 @@ if __name__ == "__main__":
     print(net.full_forward_prop(training_images_array[0]))
 
     Y = convert_labels_to_input(training_labels_array)
-    net.train_network(training_images_array, Y, epochs=10)
+    net.train_network(training_images_array, Y, epochs=50)
 
     print(net.full_forward_prop(training_images_array[0]))
 
