@@ -8,7 +8,7 @@ def sigmoid(Z):
 
 def sigmoid_dif(Z):
     '''Derivative of the sigmoid function'''
-    return Z * (1 - Z)
+    return sigmoid(Z) * (1 - sigmoid(Z))
 
 def relu(Z):
     '''ReLU function'''
