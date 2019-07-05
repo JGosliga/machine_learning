@@ -18,6 +18,15 @@ def relu_dif(Z):
     '''Derivative of the ReLU function'''
     return Z > 0
 
+def vectorized_result(j):
+    """Return a 10-dimensional unit vector with a 1.0 in the jth
+    position and zeroes elsewhere.  This is used to convert a digit
+    (0...9) into a corresponding desired output from the neural
+    network."""
+    e = np.zeros((10, 1))
+    e[j] = 1.0
+    return e
+
 def import_data():
     # Obtain the current directory for the python file
     __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -28,26 +37,26 @@ def import_data():
                 'test_labels'     : 't10k-labels-idx1-ubyte'}
 
     # Extract the training images
-    training_images_file = open(os.path.join(__location__, filename['training_images']),'rb')
+    train_images_file = open(os.path.join(__location__, filename['training_images']),'rb')
     # Skip first 4 bytes
-    training_images_file.seek(4)
+    train_images_file.seek(4)
     # Find information regarding number and size of images
-    nImg = st.unpack('>I',training_images_file.read(4))[0] # Number of images
-    nR = st.unpack('>I',training_images_file.read(4))[0] # Number of rows
-    nC = st.unpack('>I',training_images_file.read(4))[0] # Numbe of columns
+    nImg = st.unpack('>I',train_images_file.read(4))[0] # Number of images
+    nR = st.unpack('>I',train_images_file.read(4))[0] # Number of rows
+    nC = st.unpack('>I',train_images_file.read(4))[0] # Numbe of columns
     nBytesTotal = nImg*nR*nC*1 # Each pixel data is 1 byte
     # Organise images into 784 pixel long row vectors
-    training_images_array = 255 - np.asarray(st.unpack('>'+'B'*nBytesTotal,
-                                            training_images_file.read(nBytesTotal))).reshape((nImg,nR*nC))
-    
+    train_images_array = 1 - np.asarray(st.unpack('>'+'B'*nBytesTotal,
+                                            train_images_file.read(nBytesTotal))).reshape((nImg,nR*nC)) / 255
+
     # Extract the training labels
-    training_labels_file = open(os.path.join(__location__, filename['training_labels']),'rb')
+    train_labels_file = open(os.path.join(__location__, filename['training_labels']),'rb')
     # Skip first 4 bytes again
-    training_labels_file.seek(4)
-    nLbls = st.unpack('>I',training_labels_file.read(4))[0] # Number of labels
+    train_labels_file.seek(4)
+    nLbls = st.unpack('>I',train_labels_file.read(4))[0] # Number of labels
     nBytesTotal = nLbls*1 # Each label is 1 byte
-    training_labels_array = np.array(st.unpack('>'+'B'*nBytesTotal,
-                                    training_labels_file.read(nBytesTotal))).reshape(nLbls)
+    train_labels_array = np.array(st.unpack('>'+'B'*nBytesTotal,
+                                    train_labels_file.read(nBytesTotal))).reshape(nLbls)
 
     # Extract the test images
     test_images_file = open(os.path.join(__location__, filename['test_images']),'rb')
@@ -58,8 +67,8 @@ def import_data():
     nC = st.unpack('>I',test_images_file.read(4))[0] # Numbe of columns
     nBytesTotal = nImg*nR*nC*1 # Each pixel data is 1 byte
     # Organise images into 784 pixel long row vectors
-    test_images_array = 255 - np.asarray(st.unpack('>'+'B'*nBytesTotal, 
-                                        test_images_file.read(nBytesTotal))).reshape((nImg,nR*nC))
+    test_images_array = 1 - np.asarray(st.unpack('>'+'B'*nBytesTotal, 
+                                        test_images_file.read(nBytesTotal))).reshape((nImg,nR*nC)) / 255
 
     # Extract the training labels
     test_labels_file = open(os.path.join(__location__, filename['test_labels']),'rb')
@@ -69,8 +78,17 @@ def import_data():
     nBytesTotal = nLbls*1 # Each label is 1 byte
     test_labels_array = np.array(st.unpack('>'+'B'*nBytesTotal,test_labels_file.read(nBytesTotal))).reshape(nLbls)
 
-    return training_images_array, training_labels_array,  test_images_array, test_labels_array
+    return zip_data(train_images_array, train_labels_array, test_images_array, test_labels_array)
 
+def zip_data(train_images_array, train_labels_array, test_images_array, test_labels_array):
+    training_inputs = [np.reshape(x, (784, 1)) for x in train_images_array]
+    training_results = [vectorized_result(y) for y in train_labels_array]
+    training_data = zip(training_inputs, training_results)
+    test_inputs = [np.reshape(x, (784, 1)) for x in test_images_array]
+    test_data = zip(test_inputs, test_labels_array)
+
+    return training_data, test_data
+    
 def convert_labels_to_input(labels):
     # Set classification vector according to the labels
     Y = np.zeros((labels.shape[0],10,1))
@@ -182,16 +200,16 @@ class NeuralNetwork:
 
     def parameter_optimisation(self, steps):
         # Controls how quickly the algorithm moves through the gradient descent
-        learning_rate = 0.01
+        learning_rate = 3
         # Move in the opposite direction from the steepest ascent
         for idx, weights in enumerate(self.weights):
             self.weights[idx] -= learning_rate / steps * np.array(self.weight_adjust[idx])
             self.biases[idx] -= learning_rate /steps * np.array(self.biases_adjust[idx])
-            for idx2, unit in enumerate(weights):
-                weights_norm = np.sqrt(sum(unit ** 2))
-                if weights_norm > 3:
-                    self.weights[idx][idx2] = np.array(unit) / unit.max()
-                    self.biases[idx] = np.array(self.biases[idx]) / unit.max()
+            # for idx2, unit in enumerate(weights):
+            #     weights_norm = np.sqrt(sum(unit ** 2))
+            #     if weights_norm > 3:
+            #         self.weights[idx][idx2] = np.array(unit) / unit.max()
+            #         self.biases[idx] = np.array(self.biases[idx]) / unit.max()
             
     def train_network(self, X, labels, epochs):
         # Iterates the forward and backward propagation steps to train on the data given
@@ -208,24 +226,5 @@ if __name__ == "__main__":
                     {"input_dim" : 30, "output_dim" : 10, "activation" : "sigmoid"}]
     net = NeuralNetwork(architecture)
 
-    training_images_array, training_labels_array, test_images_array, test_labels_array = import_data()
-    print(training_images_array.shape[0])
-    print(training_labels_array)
-    print(test_images_array.shape[0])
-    print(test_labels_array)
-
-    print(net.full_forward_prop(training_images_array[0]))
-
-    Y = convert_labels_to_input(training_labels_array)
-    net.train_network(training_images_array, Y, epochs=50)
-
-    print(net.full_forward_prop(training_images_array[0]))
-
-    # print("Weights: \n", net.weights)
-    # print("Biases: \n", net.biases)
-    # print("Activations: \n", net.activations)
-    # print(net.full_forward_prop(training_data))
-    # classification = [[1],[0]]
-    # net.train_network(training_data, classification)
-    # print(net.full_forward_prop(training_data))
-    # print("New weights: \n", net.weights)
+    training_data, test_data = import_data()
+    print(test_data)
