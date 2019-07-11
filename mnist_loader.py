@@ -65,13 +65,13 @@ def zip_data(train_images_array, train_labels_array,
     # Create zip objects containing training images and vectorised inputs based on training labels
     training_inputs = [np.reshape(x, (784, 1)) for x in train_images_array]
     training_results = [label_to_vector(y) for y in train_labels_array]
-    training_data = zip(training_inputs, training_results)
+    training_data = list(zip(training_inputs, training_results))
     # Create validation data containing validation images and regular labels
     validation_inputs = [np.reshape(x, (784, 1)) for x in train_images_array]
     validation_data = zip(validation_inputs, validation_labels_array)
     # Create test data containing images and regular labels
     test_inputs = [np.reshape(x, (784, 1)) for x in test_images_array]
-    test_data = zip(test_inputs, test_labels_array)
+    test_data = list(zip(test_inputs, test_labels_array))
 
     return training_data, validation_data, test_data
     
