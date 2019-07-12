@@ -166,6 +166,6 @@ class NeuralNetwork:
 if __name__ == "__main__":
     import mnist_loader
     training_data, validation_data, test_data = mnist_loader.import_data()
-    layers = [[784, "input"], [32, "sigmoid"], [32, "relu"], [10, "sigmoid"]]
+    layers = [[784, "input"], [32, "sigmoid"], [16, "relu"], [10, "sigmoid"]]
     net = NeuralNetwork(layers)
-    net.train_network(training_data, epochs=10, batch_size=50, eta=2, test_data=test_data)
+    net.train_network(training_data, epochs=20, batch_size=100, eta=2, test_data=test_data)

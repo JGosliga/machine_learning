@@ -53,33 +53,30 @@ class NeuralNetwork:
         # Set activations for each layer
         self.activations = [x[1] for x in layers[1:]]
 
-    def forward_prop_test(self, a):
-        '''Take an input column vector and propagates through
-        the network to give the output.'''
-        # Iterate through layers in the network
-        for w, b, activation in zip(self.weights, self.biases, self.activations):
-            func = select_activation(activation)
-            # Compute z for the current layer
-            z = np.dot(w, a) + b
-            a = func(z)
-        return a
-    
-    def forward_prop(self, a):
+    def forward_prop(self, a, test=False):
         '''Take an input column vector and propagates through
         the network to give the output.'''
         # Set first activation as input
         As = [a]
         Zs = []
-        # Iterate through layers in the network
-        for w, b, activation in zip(self.weights, self.biases, self.activations):
-            func = select_activation(activation)
-            # Compute and store z for the current layer
-            z = np.dot(w, a) + b
-            Zs.append(z)
-            # Compute and store a for the current layer
-            a = func(z)
-            As.append(a)
-        return As, Zs
+        if not test:
+            # Iterate through layers in the network
+            for w, b, activation in zip(self.weights, self.biases, self.activations):
+                func = select_activation(activation)
+                # Compute and store z for the current layer
+                z = np.dot(w, a) + b
+                Zs.append(z)
+                # Compute and store a for the current layer
+                a = func(z)
+                As.append(a)
+            return As, Zs
+        else:
+            for w, b, activation in zip(self.weights, self.biases, self.activations):
+                func = select_activation(activation)
+                # Compute z for the current layer
+                z = np.dot(w, a) + b
+                a = func(z)
+            return a
 
     def backward_prop(self, X, Y):
         '''This function performs the back propagation algorithm 
@@ -158,16 +155,18 @@ class NeuralNetwork:
         '''Checks the current classification accuracy by
         feeding the test images forward and then comparing
         the results with the test labels.'''
+        X = np.asarray([x.ravel() for x, y in test_data]).T
+        Y = np.asarray([y for x, y in test_data])
         # Take the position of the largest value as the classification
-        test_results = [(np.argmax(self.forward_prop_test(x)), y)
-                        for x, y in test_data]
+        test_results = np.array([np.argmax(x) 
+                        for x in self.forward_prop(X, test=True).T])
         # Convert the true/false values to integers and sum over the results
         # to give the number of correctly classified images
-        return sum(int(x==y) for x, y in test_results)
+        return sum(int(x==y) for x, y in zip(test_results, Y))
 
 if __name__ == "__main__":
     import mnist_loader
     training_data, validation_data, test_data = mnist_loader.import_data()
-    layers = [[784, "input"], [32, "sigmoid"], [32, "relu"], [10, "relu"]]
+    layers = [[784, "input"], [32, "sigmoid"], [16, "sigmoid"], [32, "relu"], [10, "sigmoid"]]
     net = NeuralNetwork(layers)
-    net.train_network(training_data, epochs=10, batch_size=10, eta=2, test_data=test_data)
+    net.train_network(training_data, epochs=50, batch_size=100, eta=2, test_data=test_data)
