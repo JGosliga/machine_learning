@@ -20,7 +20,7 @@ def import_data():
     nC_test = st.unpack('>I',test_images_file.read(4))[0] # Numbe of columns
     nBytesTotal = nImg_test*nR_test*nC_test*1 # Each pixel data is 1 byte
     # Organise images into 784 pixel long row vectors
-    test_images_array = 1 - np.asarray(st.unpack('>'+'B'*nBytesTotal, 
+    test_images_array = np.asarray(st.unpack('>'+'B'*nBytesTotal, 
                                         test_images_file.read(nBytesTotal))).reshape((nImg_test,nR_test*nC_test)) / 255
 
     # Extract the training labels
@@ -41,7 +41,7 @@ def import_data():
     nC_train = st.unpack('>I',train_images_file.read(4))[0] # Numbe of columns
     nBytesTotal = nImg_train*nR_train*nC_train*1 # Each pixel data is 1 byte
     # Organise images into 784 pixel long row vectors
-    train_images_array = 1 - np.asarray(st.unpack('>'+'B'*nBytesTotal,
+    train_images_array = np.asarray(st.unpack('>'+'B'*nBytesTotal,
                                             train_images_file.read(nBytesTotal))).reshape((nImg_train,nR_train*nC_train)) / 255
 
     # Extract the training labels
@@ -68,7 +68,7 @@ def zip_data(train_images_array, train_labels_array,
     training_data = list(zip(training_inputs, training_results))
     # Create validation data containing validation images and regular labels
     validation_inputs = [np.reshape(x, (784, 1)) for x in train_images_array]
-    validation_data = zip(validation_inputs, validation_labels_array)
+    validation_data = list(zip(validation_inputs, validation_labels_array))
     # Create test data containing images and regular labels
     test_inputs = [np.reshape(x, (784, 1)) for x in test_images_array]
     test_data = list(zip(test_inputs, test_labels_array))
@@ -83,3 +83,4 @@ def label_to_vector(label):
 
 if __name__ == "__main__":
     training_data, validation_data, test_data = import_data()
+    print(len(test_data))
