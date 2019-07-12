@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import time
 
 def sigmoid(Z):
     '''Sigmoid function'''
@@ -63,7 +64,7 @@ class NeuralNetwork:
             a = func(z)
         return a
 
-    def backward_prop(self, x, y):
+    def backward_prop(self, X, Y):
         '''This function performs the back propagation algorithm 
         for each training example. Firstly this function performs 
         the forward propagation and stores the activations and z 
@@ -74,35 +75,38 @@ class NeuralNetwork:
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         # Set first activation as input
-        a = x
-        As = [x]
+        A = X
+        As = [X]
         Zs = []
         # Forward propagation
         for w, b, activation in zip(self.weights, self.biases, self.activations):
             func = select_activation(activation)
             # Compute and store z for the current layer
-            z = np.dot(w, a) + b
-            Zs.append(z)
+            Z = [np.dot(w, a) + b for a in A]
+            Zs.append(Z)
             # Compute and store a for the current layer
-            a = func(z)
-            As.append(a)
+            A = [func(z) for z in Z]
+            As.append(A)
         # Back propagation
         prime = select_prime(self.activations[-1])
-        delta = cost_func_derivative(As[-1], y) * prime(Zs[-1])
+        Del_C = [cost_func_derivative(a, y) for a, y in zip(As[-1], Y) ]
+        Delta = [del_C * prime(z) for del_C, z in zip(Del_C, Zs[-1])]
         # Set the derivative of cost function w.r.t. the weights and biases for
         # the output layer
-        nabla_b[-1] = delta
-        nabla_w[-1] = np.dot(delta, As[-2].T)
+        nabla_b[-1] = Delta
+        nabla_w[-1] = [np.dot(delta, a.T) for delta, a in zip(Delta, As[-2])]
         for idx in range(2, self.num_layers):
             prime = select_prime(self.activations[-idx])
             # Calculate the error in each layer
-            delta = np.dot(self.weights[-idx + 1].T, delta) * prime(Zs[-idx])
+            Delta = [np.dot(self.weights[-idx + 1].T, delta) * prime(z) 
+                    for delta, z in zip(Delta, Zs[-idx])]
             # Store the derivative of cost function w.r.t. the weights and biases
-            nabla_b[-idx] = delta
-            nabla_w[-idx] = np.dot(delta, As[-idx -1].T)
+            nabla_b[-idx] = Delta
+            nabla_w[-idx] = [np.dot(delta, a.T) 
+                            for delta, a in zip(Delta, As[-idx -1])]
         return nabla_w, nabla_b
-
-    def update_weights(self, mini_batch, eta):
+    
+    def update_weights_matrix(self, mini_batch, eta):
         '''Store the partial derivatives of the cost function 
         w.r.t. the weights and biases from each training example 
         for each layer, average over the errors and use this to 
@@ -111,12 +115,16 @@ class NeuralNetwork:
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         m = len(mini_batch)
+        X = []
+        Y = []
         for x, y in mini_batch:
-            # Calculate the error at each layer for each training example
-            delta_nabla_w, delta_nabla_b = self.backward_prop(x, y)
-            # Store the summation of these errors for each layer
-            nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-            nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+            X.append(x)
+            Y.append(y)
+         # Calculate the error at each layer for each training example
+        delta_nabla_w, delta_nabla_b = self.backward_prop(X, Y)
+        # Store the summation of these errors for each layer
+        nabla_w = [np.sum(dnw, axis=0) for dnw in delta_nabla_w]
+        nabla_b = [np.sum(dnb, axis=0) for dnb in delta_nabla_b]
         # For each layer adjust the weights and biases accordingly
         self.weights = [w - (eta / m) * nw 
                         for w, nw in zip(self.weights, nabla_w)]
@@ -140,7 +148,7 @@ class NeuralNetwork:
                             for k in range(0, n, batch_size)]
             # Update the weights for each batch
             for mini_batch in mini_batches:
-                self.update_weights(mini_batch, eta)
+                self.update_weights_matrix(mini_batch, eta)
             # Check the classification accuracy
             if test_data:
                 print("Epoch {0}: {1} / {2}".format(
@@ -164,4 +172,4 @@ if __name__ == "__main__":
     training_data, validation_data, test_data = mnist_loader.import_data()
     layers = [[784, "input"], [32, "sigmoid"], [32, "relu"], [10, "sigmoid"]]
     net = NeuralNetwork(layers)
-    net.train_network(training_data, epochs=20, batch_size=10, eta=2, test_data=test_data)
+    net.train_network(training_data, epochs=10, batch_size=10, eta=1, test_data=test_data)
