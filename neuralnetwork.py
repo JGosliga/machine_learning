@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import time
 
 def sigmoid(Z):
     '''Sigmoid function'''
@@ -132,6 +133,7 @@ class NeuralNetwork:
         if test_data: 
             n_test = len(test_data)
         n = len(training_data)
+        start = time.time()
         for j in range(epochs):
             # Shuffle training data
             random.shuffle(training_data)
@@ -147,6 +149,8 @@ class NeuralNetwork:
                     j+1, self.evaluate(test_data), n_test))
             else:
                 print("Epoch {0} complete".format(j+1))
+        end = time.time()
+        print("Time to train: ", end - start)
 
     def evaluate(self, test_data):
         '''Checks the current classification accuracy by
@@ -164,4 +168,4 @@ if __name__ == "__main__":
     training_data, validation_data, test_data = mnist_loader.import_data()
     layers = [[784, "input"], [32, "sigmoid"], [32, "relu"], [10, "sigmoid"]]
     net = NeuralNetwork(layers)
-    net.train_network(training_data, epochs=20, batch_size=10, eta=2, test_data=test_data)
+    net.train_network(training_data, epochs=10, batch_size=10, eta=1, test_data=test_data)
