@@ -140,6 +140,7 @@ class NeuralNetwork:
         if test_data: 
             n_test = len(test_data)
         n = len(training_data)
+        start = time.time()
         for j in range(epochs):
             # Shuffle training data
             random.shuffle(training_data)
@@ -155,6 +156,8 @@ class NeuralNetwork:
                     j+1, self.evaluate(test_data), n_test))
             else:
                 print("Epoch {0} complete".format(j+1))
+        end = time.time()
+        print("Time to train: ", end - start)
 
     def evaluate(self, test_data):
         '''Checks the current classification accuracy by
