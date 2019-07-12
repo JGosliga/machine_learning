@@ -53,7 +53,7 @@ class NeuralNetwork:
         # Set activations for each layer
         self.activations = [x[1] for x in layers[1:]]
 
-    def forward_prop(self, a):
+    def forward_prop_test(self, a):
         '''Take an input column vector and propagates through
         the network to give the output.'''
         # Iterate through layers in the network
@@ -63,6 +63,23 @@ class NeuralNetwork:
             z = np.dot(w, a) + b
             a = func(z)
         return a
+    
+    def forward_prop(self, a):
+        '''Take an input column vector and propagates through
+        the network to give the output.'''
+        # Set first activation as input
+        As = [a]
+        Zs = []
+        # Iterate through layers in the network
+        for w, b, activation in zip(self.weights, self.biases, self.activations):
+            func = select_activation(activation)
+            # Compute and store z for the current layer
+            z = np.dot(w, a) + b
+            Zs.append(z)
+            # Compute and store a for the current layer
+            a = func(z)
+            As.append(a)
+        return As, Zs
 
     def backward_prop(self, X, Y):
         '''This function performs the back propagation algorithm 
@@ -75,35 +92,21 @@ class NeuralNetwork:
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         # Set first activation as input
-        A = X
-        As = [X]
-        Zs = []
-        # Forward propagation
-        for w, b, activation in zip(self.weights, self.biases, self.activations):
-            func = select_activation(activation)
-            # Compute and store z for the current layer
-            Z = [np.dot(w, a) + b for a in A]
-            Zs.append(Z)
-            # Compute and store a for the current layer
-            A = [func(z) for z in Z]
-            As.append(A)
+        As, Zs = self.forward_prop(X)
         # Back propagation
         prime = select_prime(self.activations[-1])
-        Del_C = [cost_func_derivative(a, y) for a, y in zip(As[-1], Y) ]
-        Delta = [del_C * prime(z) for del_C, z in zip(Del_C, Zs[-1])]
+        Delta =  cost_func_derivative(As[-1], Y) * prime(Zs[-1])
         # Set the derivative of cost function w.r.t. the weights and biases for
         # the output layer
-        nabla_b[-1] = Delta
-        nabla_w[-1] = [np.dot(delta, a.T) for delta, a in zip(Delta, As[-2])]
+        nabla_b[-1] = Delta.sum(1).reshape([len(Delta), 1])
+        nabla_w[-1] = np.dot(Delta, As[-2].T) 
         for idx in range(2, self.num_layers):
             prime = select_prime(self.activations[-idx])
             # Calculate the error in each layer
-            Delta = [np.dot(self.weights[-idx + 1].T, delta) * prime(z) 
-                    for delta, z in zip(Delta, Zs[-idx])]
+            Delta = np.dot(self.weights[-idx + 1].T, Delta) * prime(Zs[-idx]) 
             # Store the derivative of cost function w.r.t. the weights and biases
-            nabla_b[-idx] = Delta
-            nabla_w[-idx] = [np.dot(delta, a.T) 
-                            for delta, a in zip(Delta, As[-idx -1])]
+            nabla_b[-idx] = Delta.sum(1).reshape([len(Delta), 1])
+            nabla_w[-idx] = np.dot(Delta, As[-idx -1].T) 
         return nabla_w, nabla_b
     
     def update_weights_matrix(self, mini_batch, eta):
@@ -112,19 +115,11 @@ class NeuralNetwork:
         for each layer, average over the errors and use this to 
         calculate the overall adjustment required for each of the 
         weights and biases.''' 
-        nabla_w = [np.zeros(w.shape) for w in self.weights]
-        nabla_b = [np.zeros(b.shape) for b in self.biases]
         m = len(mini_batch)
-        X = []
-        Y = []
-        for x, y in mini_batch:
-            X.append(x)
-            Y.append(y)
+        X = np.asarray([x.ravel() for x, y in mini_batch]).T
+        Y = np.asarray([y.ravel() for x, y in mini_batch]).T
          # Calculate the error at each layer for each training example
-        delta_nabla_w, delta_nabla_b = self.backward_prop(X, Y)
-        # Store the summation of these errors for each layer
-        nabla_w = [np.sum(dnw, axis=0) for dnw in delta_nabla_w]
-        nabla_b = [np.sum(dnb, axis=0) for dnb in delta_nabla_b]
+        nabla_w, nabla_b = self.backward_prop(X, Y)
         # For each layer adjust the weights and biases accordingly
         self.weights = [w - (eta / m) * nw 
                         for w, nw in zip(self.weights, nabla_w)]
@@ -164,7 +159,7 @@ class NeuralNetwork:
         feeding the test images forward and then comparing
         the results with the test labels.'''
         # Take the position of the largest value as the classification
-        test_results = [(np.argmax(self.forward_prop(x)), y)
+        test_results = [(np.argmax(self.forward_prop_test(x)), y)
                         for x, y in test_data]
         # Convert the true/false values to integers and sum over the results
         # to give the number of correctly classified images
@@ -173,6 +168,6 @@ class NeuralNetwork:
 if __name__ == "__main__":
     import mnist_loader
     training_data, validation_data, test_data = mnist_loader.import_data()
-    layers = [[784, "input"], [32, "sigmoid"], [32, "relu"], [10, "sigmoid"]]
+    layers = [[784, "input"], [32, "sigmoid"], [32, "relu"], [10, "relu"]]
     net = NeuralNetwork(layers)
-    net.train_network(training_data, epochs=10, batch_size=10, eta=1, test_data=test_data)
+    net.train_network(training_data, epochs=10, batch_size=10, eta=2, test_data=test_data)
