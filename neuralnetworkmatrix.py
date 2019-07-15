@@ -144,8 +144,8 @@ class NeuralNetwork:
                 self.update_weights_matrix(mini_batch, eta)
             # Check the classification accuracy
             if test_data:
-                print("Epoch {0}: {1} / {2}".format(
-                    j+1, self.evaluate(test_data), n_test))
+                print("Epoch {0}: {1} %".format(
+                    j+1, self.evaluate(test_data)/ n_test * 100))
             else:
                 print("Epoch {0} complete".format(j+1))
         end = time.time()
