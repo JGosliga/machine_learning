@@ -1,4 +1,4 @@
-import random
+simport random
 import numpy as np
 import time
 
