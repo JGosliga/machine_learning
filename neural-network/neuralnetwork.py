@@ -1,4 +1,4 @@
-simport random
+import random
 import numpy as np
 import time
 
@@ -164,8 +164,8 @@ class NeuralNetwork:
         return sum(int(x==y) for x, y in test_results)
 
 if __name__ == "__main__":
-    import mnist_loader
-    training_data, validation_data, test_data = mnist_loader.import_data()
+    import mnistloader
+    training_data, validation_data, test_data = mnistloader.import_data()
     layers = [[784, "input"], [32, "sigmoid"], [16, "relu"], [10, "sigmoid"]]
     net = NeuralNetwork(layers)
     net.train_network(training_data, epochs=20, batch_size=100, eta=2, test_data=test_data)
