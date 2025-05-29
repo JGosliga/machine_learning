@@ -10,9 +10,11 @@ from tensorflow.keras.layers import LSTM, Dense
 # Download latest version
 path = kagglehub.dataset_download("suyashlakhani/apple-stock-prices-20152020")
 print("Path to dataset files:", path)
+filename = "AAPL.csv"
+print("Filename for dataset files:", filename)
 
 # Load data
-df = pd.read_csv(f"{path}/AAPL.csv")
+df = pd.read_csv(f"{path}/{filename}")
 data = df['open'].values.reshape(-1, 1)  # Replace 'value_column' with your column name
 
 print(len(data), "data points loaded.")
